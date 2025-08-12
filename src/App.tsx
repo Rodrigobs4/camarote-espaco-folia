@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import styled, { createGlobalStyle, keyframes } from "styled-components";
 import {
   Beer,
@@ -6,7 +6,6 @@ import {
   Disc3,
   UtensilsCrossed,
   Bandage,
-  MapPin,
   Route,
   Landmark,
   ClipboardList,
@@ -196,64 +195,90 @@ const CTA = styled.a`
   }
 `;
 
-/* ===== Hero ===== */
-const Hero = styled(Section)`
-  padding: clamp(120px, 14vw, 180px) 0 clamp(80px, 10vw, 120px);
-  color: #fff;
+/* ===== Hero (slider) ===== */
+const Hero = styled.section<{ $h?: string }>`
+  height: ${({ $h }) => $h || "80vh"};
+  min-height: 520px;
   position: relative;
-  isolation: isolate;
   overflow: hidden;
+  color: #fff;
+`;
 
-  /* Hero como IMAGEM de fundo com overlay para leitura */
-  .bg {
-    position: absolute;
-    inset: 0;
-    z-index: -2;
-  }
-  .bg img {
+const SliderWrap = styled.div`
+  height: 100%;
+  width: 100%;
+  position: relative;
+`;
+
+const Track = styled.div<{ $i: number }>`
+  display: flex;
+  height: 100%;
+  width: 100%;
+  transform: translateX(${(p) => `-${p.$i * 100}%`});
+  transition: transform 0.6s ease;
+`;
+
+const Slide = styled.div<{ $pos?: string }>`
+  flex: 0 0 100%;
+  height: 100%;
+  position: relative;
+  > img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transform: scale(1.04);
-    filter: saturate(1.08) contrast(1.05);
-  }
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
+    object-position: ${(p) => p.$pos || "center"};
   }
 `;
-const HeroGrid = styled(Container)`
-  display: grid;
-  grid-template-columns: 1fr;
-  align-items: center;
-  gap: clamp(16px, 4vw, 40px);
-  max-width: 1100px;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
-`;
-const HeroTitle = styled.h1`
-  font-size: clamp(34px, 6vw, 56px);
-  line-height: 1.02;
-  margin: 6px 0 12px;
-  letter-spacing: 0.4px;
-`;
-const HeroSub = styled.p`
-  font-size: clamp(16px, 2.2vw, 20px);
-  color: var(--areia);
-  margin: 0 0 26px;
-`;
-const HeroCard = styled.div`
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.1),
-    rgba(255, 255, 255, 0.04)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(8px);
+
+/* setas */
+const ControlBtn = styled.button`
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  cursor: pointer;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
   color: #fff;
-  border-radius: 20px;
-  padding: clamp(18px, 3vw, 28px);
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(2px);
+  z-index: 2;
+  &:hover {
+    background: rgba(0, 0, 0, 0.5);
+  }
+  &.prev {
+    left: 14px;
+  }
+  &.next {
+    right: 14px;
+  }
+`;
+
+/* bolinhas */
+const Dots = styled.div`
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 14px;
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+`;
+const Dot = styled.button`
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.55);
+  &.active {
+    background: #fff;
+    width: 24px;
+  }
+  transition: width 0.2s ease;
 `;
 
 /* ===== Sobre ===== */
@@ -271,31 +296,17 @@ const Card = styled.div`
   padding: clamp(18px, 3.2vw, 28px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
 `;
-const Pill = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #ffffff10;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 8px 12px;
-  border-radius: 999px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  font-size: 12px;
-`;
 
 /* ===== Estrutura (feature cards) ===== */
 const Features = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: clamp(12px, 2vw, 20px);
   margin-top: 18px;
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  @media (max-width: 680px) {
-    grid-template-columns: repeat(2, 1fr);
+  align-items: stretch;
+  /* Faz com que o wrapper de animação não quebre o grid */
+  & > ${FadeIn} {
+    display: contents;
   }
 `;
 const FeatureCard = styled.div`
@@ -308,6 +319,7 @@ const FeatureCard = styled.div`
   gap: 10px;
   place-content: start;
   min-height: 150px;
+  height: 100%;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
   &:hover {
     transform: translateY(-4px);
@@ -394,6 +406,88 @@ function useRevealOnScroll() {
   }, []);
 }
 
+type SlideImg = { src: string; alt: string; pos?: string };
+
+function HeroSlider({
+  images,
+  interval = 5000,
+}: {
+  images: SlideImg[];
+  interval?: number;
+}) {
+  const [i, setI] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduced || paused || images.length <= 1) return;
+    const id = setInterval(
+      () => setI((v) => (v + 1) % images.length),
+      interval
+    );
+    return () => clearInterval(id);
+  }, [images.length, interval, paused]);
+
+  const go = (n: number) => setI((n + images.length) % images.length);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") go(i + 1);
+      if (e.key === "ArrowLeft") go(i - 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [i, images.length]);
+
+  return (
+    <SliderWrap
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      role="region"
+      aria-label="Slide de imagens do Camarote Espaço Folia"
+    >
+      <Track $i={i}>
+        {images.map((img, idx) => (
+          <Slide key={idx} $pos={img.pos}>
+            <img src={img.src} alt={img.alt} />
+          </Slide>
+        ))}
+      </Track>
+
+      {images.length > 1 && (
+        <>
+          <ControlBtn
+            className="prev"
+            aria-label="Imagem anterior"
+            onClick={() => go(i - 1)}
+          >
+            ‹
+          </ControlBtn>
+          <ControlBtn
+            className="next"
+            aria-label="Próxima imagem"
+            onClick={() => go(i + 1)}
+          >
+            ›
+          </ControlBtn>
+          <Dots>
+            {images.map((_, idx) => (
+              <Dot
+                key={idx}
+                className={idx === i ? "active" : ""}
+                aria-label={`Ir para imagem ${idx + 1}`}
+                onClick={() => go(idx)}
+              />
+            ))}
+          </Dots>
+        </>
+      )}
+    </SliderWrap>
+  );
+}
+
 export default function EspacoFoliaApp() {
   useRevealOnScroll();
   return (
@@ -420,36 +514,27 @@ export default function EspacoFoliaApp() {
       </Nav>
 
       {/* ===== HERO ===== */}
-      <Hero id="top">
-        <div className="bg" aria-hidden>
-          {/* Coloque sua imagem em public/hero-espaço-folia.jpg ou ajuste o caminho abaixo */}
-          <img src="/hero-espaço-folia.jpg" alt="Camarote Espaço Folia" />
-        </div>
-        <HeroGrid>
-          <FadeIn data-reveal>
-            <Pill>RAÍZES DO SERTÃO • CARNAVAL 2025</Pill>
-            <HeroTitle>ESPAÇO FOLIA – Carnaval de Salvador 2025</HeroTitle>
-            <HeroSub>
-              Estrutura, Segurança, Conforto e Diversão nos Circuitos Dodô e
-              Osmar.
-            </HeroSub>
-            <CTA href="#inscricoes" aria-label="Ir para inscrições">
-              Inscreva-se
-            </CTA>
-
-            <HeroCard style={{ marginTop: 18 }}>
-              <strong>Circuitos:</strong>
-              <List style={{ marginTop: 10 }}>
-                <li>
-                  <MapPin size={28} /> <span>Dodô (Barra/Ondina)</span>
-                </li>
-                <li>
-                  <MapPin size={28} /> <span>Osmar (Campo Grande)</span>
-                </li>
-              </List>
-            </HeroCard>
-          </FadeIn>
-        </HeroGrid>
+      <Hero id="top" $h="80vh">
+        <HeroSlider
+          images={[
+            {
+              src: "/slides/folia-01.jpg",
+              alt: "Trios no circuito Dodô (Barra/Ondina)",
+              pos: "center 35%",
+            },
+            {
+              src: "/slides/folia-02.jpg",
+              alt: "Público no Camarote Espaço Folia",
+              pos: "center",
+            },
+            {
+              src: "/slides/folia-03.jpg",
+              alt: "Noite no circuito Osmar (Campo Grande)",
+              pos: "center 25%",
+            },
+          ]}
+          interval={5000}
+        />
       </Hero>
 
       {/* ===== SOBRE ===== */}
