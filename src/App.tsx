@@ -93,7 +93,7 @@ const ColorSection = styled(Section)<{ $g: string }>`
 `;
 
 const Divider = styled.div<{ $src: string; $flip?: boolean }>`
-  height: clamp(56px, 8vw, 140px);
+  height: clamp(8px, 8vw, 20px);
   background-image: url(${(p) => p.$src});
   background-position: center;
   background-repeat: no-repeat;
@@ -594,7 +594,7 @@ export default function EspacoFoliaApp() {
         </Container>
       </ColorSection>
 
-      <Divider $src="/dividers/onda-xilo.svg" aria-hidden />
+      <Divider $src="/dividers/lines.svg" aria-hidden />
 
       {/* ===== ESTRUTURA ===== */}
       <ColorSection
@@ -653,7 +653,7 @@ export default function EspacoFoliaApp() {
         </Container>
       </ColorSection>
 
-      <Divider $src="/dividers/div-2.svg" aria-hidden />
+      <Divider $src="/dividers/onda-xilo.svg" aria-hidden />
 
       {/* ===== BAILE INFANTIL ===== */}
       <ColorSection
@@ -714,7 +714,7 @@ export default function EspacoFoliaApp() {
         </Container>
       </ColorSection>
 
-      <Divider $src="/dividers/div-3.svg" aria-hidden />
+      <Divider $src="/dividers/onda-xilo.svg" aria-hidden />
 
       {/* ===== INSCRIÇÕES ===== */}
       <ColorSection
@@ -774,7 +774,7 @@ export default function EspacoFoliaApp() {
         </Container>
       </ColorSection>
 
-      <Divider $src="/dividers/div-4.svg" aria-hidden />
+      <Divider $src="/dividers/lines.svg" aria-hidden />
 
       {/* ===== SORTEIO / DIVULGAÇÃO ===== */}
       <ColorSection
@@ -804,8 +804,6 @@ export default function EspacoFoliaApp() {
           </FadeIn>
         </Container>
       </ColorSection>
-
-      <Divider $src="/dividers/div-5.svg" aria-hidden />
 
       {/* ===== RETIRADA ===== */}
       <ColorSection
@@ -854,8 +852,6 @@ export default function EspacoFoliaApp() {
         </Container>
       </ColorSection>
 
-      <Divider $src="/dividers/div-6.svg" aria-hidden />
-
       {/* ===== REGRAS DE ACESSO ===== */}
       <ColorSection
         id="regras"
@@ -886,7 +882,7 @@ export default function EspacoFoliaApp() {
         </Container>
       </ColorSection>
 
-      <Divider $src="/dividers/div-7.svg" aria-hidden />
+      <Divider $src="/dividers/onda-xilo.svg" aria-hidden />
 
       {/* ===== FOOTER ===== */}
       <Footer>
