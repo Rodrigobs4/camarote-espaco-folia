@@ -25,10 +25,6 @@ import {
 
 /* =============================================================
   ESPAÇO FOLIA – SPA (React + styled-components)
-  - Layout vibrante com tema carnaval (cores inspiradas na arte)
-  - Header fixo, rolagem suave, seções com IDs
-  - Animações leves on-scroll (IntersectionObserver)
-  - Fonte Poppins | Ícones em SVG inline
 ============================================================== */
 
 const GlobalStyle = createGlobalStyle`
@@ -92,13 +88,14 @@ const ColorSection = styled(Section)<{ $g: string }>`
   overflow: hidden;
 `;
 
-const Divider = styled.div<{ $src: string; $flip?: boolean }>`
-  height: clamp(8px, 8vw, 20px);
+const Divider = styled.div<{ $src: string; $flip?: boolean; $h?: string }>`
+  height: ${({ $h }) => $h || "clamp(16px, 3vw, 36px)"};
   background-image: url(${(p) => p.$src});
   background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
+  background-repeat: repeat-x;
+  background-size: contain;
   transform: ${(p) => (p.$flip ? "scaleY(-1)" : "none")};
+  opacity: 0.7;
   margin-top: -1px; /* evita linha entre as seções */
 `;
 
@@ -125,7 +122,7 @@ const Nav = styled.header`
   backdrop-filter: blur(6px);
   background: linear-gradient(
     180deg,
-    rgba(10, 79, 99, 0.96) 0%,
+    rgba(8, 87, 99, 0.96) 0%,
     rgba(10, 79, 99, 0.75) 100%
   );
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
@@ -146,14 +143,21 @@ const Brand = styled.a`
   letter-spacing: 0.4px;
   font-size: 20px;
 `;
+const LogoImg = styled.img`
+  height: 120px; /* ajuste aqui se quiser maior/menor */
+  width: auto;
+  display: block;
+`;
+
 const Logo = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
-    <path
-      d="M12 2l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 16.7 6.4 19.2l1.1-6.2L3 8.6l6.2-.9L12 2z"
-      fill="var(--laranja)"
-    />
-  </svg>
+  <LogoImg
+    src="/logotipos/logo-espaco-folia.svg"
+    alt="" /* vazio para não duplicar o texto "ESPAÇO FOLIA" ao lado */
+    aria-hidden /* ícone decorativo */
+  />
 );
+
+/* Menu desktop + esconder no mobile */
 const Menu = styled.nav`
   display: flex;
   gap: clamp(8px, 3vw, 24px);
@@ -178,7 +182,11 @@ const Menu = styled.nav`
   a:hover::after {
     width: 100%;
   }
+  @media (max-width: 860px) {
+    display: none;
+  }
 `;
+
 const CTA = styled.a`
   background: var(--laranja);
   color: #101010;
@@ -192,6 +200,95 @@ const CTA = styled.a`
   &:hover {
     transform: translateY(-2px);
     background: var(--laranja-escuro);
+  }
+`;
+
+/* ===== Mobile Nav ===== */
+const MobileToggle = styled.button`
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 54px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: #fff;
+  position: relative;
+
+  @media (max-width: 860px) {
+    display: inline-flex;
+  }
+
+  span,
+  span::before,
+  span::after {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 22px;
+    height: 2px;
+    background: #fff;
+    transition: 0.25s ease;
+  }
+  span::before {
+    transform: translateY(-6px);
+  }
+  span::after {
+    transform: translateY(6px);
+  }
+  &[aria-expanded="true"] span {
+    background: transparent;
+  }
+  &[aria-expanded="true"] span::before {
+    transform: rotate(45deg);
+  }
+  &[aria-expanded="true"] span::after {
+    transform: rotate(-45deg);
+  }
+`;
+
+const MobilePanel = styled.div<{ $open: boolean }>`
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  opacity: ${({ $open }) => ($open ? 1 : 0)};
+  pointer-events: ${({ $open }) => ($open ? "auto" : "none")};
+  transition: opacity 0.25s ease;
+
+  .sheet {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: min(86vw, 340px);
+    background: linear-gradient(
+      180deg,
+      rgba(10, 79, 99, 0.98) 0%,
+      rgba(10, 79, 99, 0.92) 100%
+    );
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 18px;
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+    transform: translateX(${({ $open }) => ($open ? "0" : "100%")});
+    transition: transform 0.3s ease;
+  }
+  .sheet a {
+    color: #fff;
+    font-weight: 700;
+    padding: 10px 8px;
+    border-radius: 10px;
+  }
+  .sheet a:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .sheet .cta {
+    margin-top: 6px;
   }
 `;
 
@@ -439,6 +536,7 @@ function HeroSlider({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i, images.length]);
 
   return (
@@ -490,6 +588,27 @@ function HeroSlider({
 
 export default function EspacoFoliaApp() {
   useRevealOnScroll();
+
+  /* Estado do menu mobile */
+  const [navOpen, setNavOpen] = useState<boolean>(false);
+
+  /* trava scroll ao abrir */
+  useEffect(() => {
+    document.body.style.overflow = navOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [navOpen]);
+
+  /* fecha no ESC */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setNavOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <>
       <GlobalStyle />
@@ -498,8 +617,18 @@ export default function EspacoFoliaApp() {
       <Nav>
         <NavWrap>
           <Brand href="#top" aria-label="Espaço Folia">
-            <Logo /> <span>ESPAÇO FOLIA</span>
+            <Logo /> <span>CAMAROTE ESPAÇO FOLIA</span>
           </Brand>
+
+          <MobileToggle
+            aria-label="Abrir menu"
+            aria-expanded={navOpen}
+            aria-controls="mobile-menu"
+            onClick={() => setNavOpen((v: boolean) => !v)}
+          >
+            <span />
+          </MobileToggle>
+
           <Menu aria-label="Navegação principal">
             <a href="#sobre">Sobre</a>
             <a href="#estrutura">Estrutura</a>
@@ -511,6 +640,48 @@ export default function EspacoFoliaApp() {
             <CTA href="#inscricoes">Inscreva-se</CTA>
           </Menu>
         </NavWrap>
+
+        <MobilePanel
+          id="mobile-menu"
+          $open={navOpen}
+          onClick={() => setNavOpen(false)}
+        >
+          <div
+            className="sheet"
+            role="menu"
+            aria-label="Menu mobile"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <a href="#sobre" onClick={() => setNavOpen(false)}>
+              Sobre
+            </a>
+            <a href="#estrutura" onClick={() => setNavOpen(false)}>
+              Estrutura
+            </a>
+            <a href="#baile" onClick={() => setNavOpen(false)}>
+              Baile Infantil
+            </a>
+            <a href="#inscricoes" onClick={() => setNavOpen(false)}>
+              Inscrições
+            </a>
+            <a href="#sorteio" onClick={() => setNavOpen(false)}>
+              Sorteio
+            </a>
+            <a href="#retirada" onClick={() => setNavOpen(false)}>
+              Retirada
+            </a>
+            <a href="#regras" onClick={() => setNavOpen(false)}>
+              Regras
+            </a>
+            <CTA
+              className="cta"
+              href="#inscricoes"
+              onClick={() => setNavOpen(false)}
+            >
+              Inscreva-se
+            </CTA>
+          </div>
+        </MobilePanel>
       </Nav>
 
       {/* ===== HERO ===== */}
